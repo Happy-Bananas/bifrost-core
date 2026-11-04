@@ -1,0 +1,4 @@
+/vendor/
+/.phpunit.cache/
+# A library does not pin its dependencies; each integration's composer.lock does.
+/composer.lock

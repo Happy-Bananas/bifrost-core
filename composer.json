@@ -1,0 +1,29 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "happy-bananas/bifrost-core",
+    "description": "The shared core of BifrostConnect integrations between tracezilla and external services.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Bifrost\\Core\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

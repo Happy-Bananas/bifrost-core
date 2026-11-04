@@ -1,0 +1,42 @@
+# Runs the tests on every pull request and on every push to main, so a change
+# that breaks a test is visible before it is merged.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      # The same PHP version as the development container.
+      - name: Set up PHP 8.3 and Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+
+      - name: Check composer.json
+        run: composer validate --strict
+
+      - name: Reuse downloaded packages from earlier runs
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-8.3-${{ hashFiles('composer.json') }}
+
+      - name: Install the PHP packages
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run the tests
+        run: composer test

@@ -1,0 +1,18 @@
+# The same Docker setup as every BifrostConnect integration: one service
+# called php, used as docker compose run --rm php ...
+services:
+  php:
+    build: .
+    # Run as the host user so files written to the mounted folder (vendor/,
+    # composer.lock) are not owned by root. Without these variables, 1000 is used.
+    user: "${TRACEZILLA_DOCKER_UID:-1000}:${TRACEZILLA_DOCKER_GID:-1000}"
+    working_dir: /app
+    volumes:
+      - .:/app
+      - composer-cache:/tmp/composer-cache
+    environment:
+      COMPOSER_CACHE_DIR: /tmp/composer-cache
+      HOME: /tmp
+
+volumes:
+  composer-cache:
