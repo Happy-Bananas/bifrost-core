@@ -91,6 +91,30 @@ final class TracezillaSeedGatewayTest extends TestCase
         $this->gateway()->createSku(self::SKU);
     }
 
+    public function test_the_own_company_is_partner_number_one(): void
+    {
+        $this->api->append(new Response(200, [], json_encode(['data' => [
+            ['id' => 'partner-2', 'number' => 2, 'name' => 'TZ Supplier', 'locations' => []],
+            ['id' => 'partner-1', 'number' => 1, 'name' => 'Banana McShopface', 'locations' => [['id' => 'location-1', 'ref' => 'TZ-WAREHOUSE-MAIN']]],
+        ]], JSON_THROW_ON_ERROR)));
+
+        $ownCompany = $this->gateway()->ownCompany();
+
+        self::assertSame('partner-1', $ownCompany['id']);
+        self::assertSame('Banana McShopface', $ownCompany['name']);
+        self::assertSame(['TZ-WAREHOUSE-MAIN' => 'location-1'], $ownCompany['locations']);
+    }
+
+    public function test_it_explains_a_company_without_partner_number_one(): void
+    {
+        $this->api->append(new Response(200, [], '{"data":[{"id":"partner-2","number":2,"name":"TZ Supplier"}]}'));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('no partner number 1');
+
+        $this->gateway()->ownCompany();
+    }
+
     private function sku(array $units): Response
     {
         return new Response(200, [], json_encode(['data' => ['id' => 'sku-1', 'unit_of_measure' => 'pcs'] + $units], JSON_THROW_ON_ERROR));

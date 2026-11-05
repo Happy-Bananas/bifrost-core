@@ -12,8 +12,8 @@ final class InMemorySeedGateway implements SeedGateway
     /** @var array<string, array{id: string, locations: array<string, string>}> */
     public array $partners = [];
 
-    /** @var array<string, array{id: string, locations: array<string, string>}> Keyed by name. */
-    public array $companies = ['Own Company' => ['id' => 'own', 'locations' => []]];
+    /** @var array{id: string, name: string, locations: array<string, string>} Partner number 1 */
+    public array $ownCompany = ['id' => 'own', 'name' => 'Own Company', 'locations' => []];
 
     /** @var array<string, true> */
     public array $skus = [];
@@ -37,13 +37,9 @@ final class InMemorySeedGateway implements SeedGateway
         return $this->partners;
     }
 
-    public function ownCompany(string $name): array
+    public function ownCompany(): array
     {
-        if (! isset($this->companies[$name])) {
-            throw new RuntimeException("No tracezilla partner is named [{$name}].");
-        }
-
-        return $this->companies[$name];
+        return $this->ownCompany;
     }
 
     public function skuCodes(): array
@@ -76,10 +72,8 @@ final class InMemorySeedGateway implements SeedGateway
                 $this->partners[$ref]['locations'][$payload['ref']] = $id;
             }
         }
-        foreach ($this->companies as $name => $company) {
-            if ($company['id'] === $partnerId) {
-                $this->companies[$name]['locations'][$payload['ref']] = $id;
-            }
+        if ($this->ownCompany['id'] === $partnerId) {
+            $this->ownCompany['locations'][$payload['ref']] = $id;
         }
 
         return $id;
