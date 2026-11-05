@@ -2,7 +2,7 @@
 
 What changed in each release, and what an integration has to change to use it.
 
-## 0.6.0 (unreleased)
+## 0.6.0 (2026-11-05)
 
 The seed needs no settings of its own any more.
 
