@@ -1,0 +1,186 @@
+# tracezilla development data. Seeds tracezilla only; the matching shop products
+# come from the platform's sandbox or development store.
+#
+# Preview and apply it with:
+#   php bin/bifrost-connect tracezilla:seed --dry-run
+#   php bin/bifrost-connect tracezilla:seed --execute --confirm
+#
+# Field names below the identity keys are passed to the tracezilla API
+# unchanged, so any field from https://app.tracezilla.com/api/documentation
+# can be added. Records are identified by:
+#   partners and locations  -> ref (own_company -> TRACEZILLA_OWN_COMPANY)
+#   skus                    -> sku_code
+#   purchase_orders         -> ext_ref
+# Existing records are never updated; re-running the seed skips them.
+#
+# tracezilla defaults that matter:
+#   - sku_code is at most 17 characters.
+#   - New locations are warehouses unless is_warehouse: false is set. In
+#     tracezilla "warehouse" means the location can be used for pickups and
+#     deliveries, so supplier pickup locations need it; customer addresses don't.
+#   - New partners are owned by the user who runs the seed unless
+#     owned_by_id is set.
+#   - On create, tracezilla derives lot_unit and default_uom_conversion from
+#     unit_of_measure (pcs -> pcs/1, kg -> g/0.001). The seed then updates the
+#     SKU with lock_uom_conversion: false to store the requested units. Units
+#     cannot be changed once an SKU has lots.
+
+version: 1
+
+# The team's own company already exists in tracezilla. Its name differs per
+# developer, so it is set with TRACEZILLA_OWN_COMPANY in .env. The seed only
+# adds missing locations to it and never changes the company itself.
+own_company:
+  locations:
+    - ref: TZ-WAREHOUSE-MAIN
+      name: TZ Main warehouse
+      is_warehouse: true
+      address: Testvej 3
+      zip: '8000'
+      city: Aarhus C
+      country: DK
+
+partners:
+  - ref: TZ-SUPPLIER
+    name: TZ Supplier
+    type: organization
+    country: DK
+    currency: DKK
+    is_supplier: true
+    locations:
+      - ref: TZ-SUPPLIER-HQ
+        name: TZ Supplier headquarters
+        is_primary: true
+        # Purchase orders pick up from here, which requires the warehouse role.
+        is_warehouse: true
+        address: Testvej 1
+        zip: '8000'
+        city: Aarhus C
+        country: DK
+
+  - ref: TZ-WEBSHOP
+    name: TZ Webshop
+    type: organization
+    country: DK
+    currency: DKK
+    is_customer: true
+    locations:
+      - ref: TZ-WEBSHOP-HQ
+        name: TZ Webshop headquarters
+        is_primary: true
+        is_warehouse: false
+        is_invoice_to: true
+        address: Testvej 2
+        zip: '8000'
+        city: Aarhus C
+        country: DK
+
+# Matched SKUs cover every product used by the sandbox orders. The rest of the
+# shop's catalog (e.g. TZ-FRUIT-004) is deliberately missing, so creating the
+# missing SKUs has something to do.
+skus:
+  - sku_code: TZ-FRUIT-001
+    global_name: Fairtrade Bananas 1 kg
+    category: finished_good
+    unit_of_measure: pcs
+    lot_unit: pcs
+    default_uom_conversion: 1
+    weight_factor_net: 1
+    weight_factor_gross: 1.05
+
+  - sku_code: TZ-FRUIT-002
+    global_name: Golden Pineapple
+    category: finished_good
+    unit_of_measure: pcs
+    lot_unit: pcs
+    default_uom_conversion: 1
+    weight_factor_net: 1.2
+    weight_factor_gross: 1.25
+
+  - sku_code: TZ-FRUIT-003
+    global_name: Ripe Mango
+    category: finished_good
+    unit_of_measure: pcs
+    lot_unit: pcs
+    default_uom_conversion: 1
+    weight_factor_net: 0.4
+    weight_factor_gross: 0.42
+
+  # Variations of the shop product TZ-COFFEE-001.
+  - sku_code: TZ-COFFEE-001-01
+    global_name: House Blend Coffee Beans 250 g
+    category: finished_good
+    unit_of_measure: pcs
+    lot_unit: pcs
+    default_uom_conversion: 1
+    weight_factor_net: 0.25
+    weight_factor_gross: 0.28
+
+  - sku_code: TZ-COFFEE-001-02
+    global_name: House Blend Coffee Beans 1 kg
+    category: finished_good
+    unit_of_measure: pcs
+    lot_unit: pcs
+    default_uom_conversion: 1
+    weight_factor_net: 1
+    weight_factor_gross: 1.05
+
+  - sku_code: TZ-DAIRY-001
+    global_name: Aged Gouda 500 g
+    category: finished_good
+    unit_of_measure: pcs
+    lot_unit: pcs
+    default_uom_conversion: 1
+    weight_factor_net: 0.5
+    weight_factor_gross: 0.52
+
+  # Sold per bottle, stored in crates of 12. Exposes unit-conversion handling.
+  - sku_code: TZ-DAIRY-002
+    global_name: Organic Whole Milk 1 L
+    category: finished_good
+    unit_of_measure: pcs
+    lot_unit: colli
+    default_uom_conversion: 12
+    weight_factor_net: 1.03
+    weight_factor_gross: 1.06
+
+  # Exists only in tracezilla, for catalog difference reports. A raw material
+  # measured in kg and stored in 25 kg sacks.
+  - sku_code: TZ-RAW-001
+    global_name: Raw Cocoa Beans 25 kg
+    category: raw_material
+    unit_of_measure: kg
+    lot_unit: colli
+    default_uom_conversion: 25
+    weight_factor_net: 1
+    weight_factor_gross: 1.02
+
+  # Exists only in tracezilla, but could be sold: the list of products to decide
+  # on with the customer has one entry.
+  - sku_code: TZ-GIFT-001
+    global_name: Gourmet Gift Box
+    category: finished_good
+    unit_of_measure: pcs
+    lot_unit: pcs
+    default_uom_conversion: 1
+    weight_factor_net: 1.5
+    weight_factor_gross: 1.8
+
+# Received purchase orders put stock into the warehouse. Quantities differ from
+# the shop on purpose, so inventory synchronization has updates to report.
+# TZ-FRUIT-003 is never received and stays at zero.
+purchase_orders:
+  - ext_ref: TZ-STOCK-001
+    supplier: { partner: TZ-SUPPLIER, location: TZ-SUPPLIER-HQ }
+    deliver_to: { partner: own_company, location: TZ-WAREHOUSE-MAIN }
+    currency: DKK
+    exchange_rate: 100
+    receive: true
+    lines:
+      - { sku_code: TZ-FRUIT-001, quantity: 80, unit_price: 5, price_per: stock_unit }
+      - { sku_code: TZ-FRUIT-002, quantity: 50, unit_price: 12, price_per: stock_unit }
+      - { sku_code: TZ-COFFEE-001-01, quantity: 10, unit_price: 20, price_per: stock_unit }
+      - { sku_code: TZ-COFFEE-001-02, quantity: 15, unit_price: 70, price_per: stock_unit }
+      - { sku_code: TZ-DAIRY-001, quantity: 21, unit_price: 20, price_per: stock_unit }
+      - { sku_code: TZ-DAIRY-002, quantity: 2, unit_price: 96, price_per: lot_unit }
+      - { sku_code: TZ-RAW-001, quantity: 4, unit_price: 60, price_per: stock_unit }

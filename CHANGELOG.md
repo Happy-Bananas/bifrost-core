@@ -2,6 +2,26 @@
 
 What changed in each release, and what an integration has to change to use it.
 
+## 0.4.0 (unreleased)
+
+The tracezilla seed moves here from the integration templates: `SeedCommand`,
+`Seeder`, `SeedDefinition`, `SeedFileValidator`, `SeedGateway`,
+`TracezillaSeedGateway` and `SeedResult` under `Bifrost\Core\Seed`, and the
+standard test dataset in `seeds/tracezilla.yaml`.
+
+New: `tracezilla:seed --execute` writes only into the team named by
+`TRACEZILLA_SEED_ALLOWED_TEAM` in `.env`. Without it, or with another team,
+the command stops with exit code 2 before contacting tracezilla. A dry run
+needs nothing.
+
+What an integration changes:
+
+- Replace `bin/seed-tracezilla` with the short version that runs
+  `Bifrost\Core\Seed\SeedCommand`, and delete `src/Seed/`, `tests/Unit/Seed/`
+  and `seeds/` (unless the project changed its seed file; keep that file).
+- In a development project, add `TRACEZILLA_SEED_ALLOWED_TEAM=<team slug>` to
+  `.env`. Never add it for a customer's production team.
+
 ## 0.3.0 (2026-11-05)
 
 The tracezilla client sends a request again when tracezilla cannot handle it
