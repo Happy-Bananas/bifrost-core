@@ -12,7 +12,11 @@ final class SystemPause implements Pause
 {
     public function pause(int $seconds, string $reason): void
     {
-        fwrite(STDERR, "{$reason}. Trying again in {$seconds} seconds.\n");
+        $unit = 'seconds';
+        if ($seconds === 1) {
+            $unit = 'second';
+        }
+        fwrite(STDERR, "{$reason}. Trying again in {$seconds} {$unit}.\n");
         sleep($seconds);
     }
 }

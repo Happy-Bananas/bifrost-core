@@ -15,7 +15,7 @@ for the moment, so a short outage or rate limit no longer fails a whole run.
 - Up to 3 retries, waiting 1, 2 and 4 seconds, or as long as tracezilla's
   `Retry-After` header asks, but never more than 60 seconds.
 - Each retry writes one line to the error output, for example
-  `GET /skus: tracezilla answered HTTP 503. Trying again in 2 seconds.`, so it
+  `GET /skus: tracezilla answered HTTP 503. Trying again in 1 second.`, so it
   shows in the cron log.
 
 What an integration changes: require `^0.3`. Nothing else.
