@@ -2,7 +2,7 @@
 
 What changed in each release, and what an integration has to change to use it.
 
-## 0.2.0 (unreleased)
+## 0.2.0 (2026-11-05)
 
 The tracezilla client and the OAuth tokens move here from the WooCommerce
 integration template: `Client`, `TracezillaConfiguration`, `TokenProvider`,
