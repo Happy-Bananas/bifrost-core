@@ -2,7 +2,7 @@
 
 What changed in each release, and what an integration has to change to use it.
 
-## 0.5.0 (unreleased)
+## 0.5.0 (2026-11-05)
 
 New: `Bifrost\Core\Lock\RunLock::takeOrExit($projectDirectory, $command)`.
 A command calls it before it reads or writes. It takes the integration's run
