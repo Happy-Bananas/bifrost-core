@@ -2,7 +2,7 @@
 
 What changed in each release, and what an integration has to change to use it.
 
-## 0.4.0 (unreleased)
+## 0.4.0 (2026-11-05)
 
 The tracezilla seed moves here from the integration templates: `SeedCommand`,
 `Seeder`, `SeedDefinition`, `SeedFileValidator`, `SeedGateway`,
