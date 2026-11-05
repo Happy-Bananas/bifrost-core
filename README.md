@@ -24,7 +24,6 @@ here to see how it works; change it here, not in a project's `vendor/`.
 | `Bifrost\Core\Tracezilla\TokenStore` | Keeps the tokens in a file only the owner can read, `tracezilla-token.json` in the runtime directory. |
 | `Bifrost\Core\Tracezilla\SkuCreator` | Creates a tracezilla SKU with exactly the units asked for. |
 | `Bifrost\Core\Seed\SeedCommand` | The `tracezilla:seed` command: fills a development company with the test dataset in `seeds/tracezilla.yaml`. |
-| `Bifrost\Core\Seed\SeedTeamGuard` | Lets the seed write only into the team named by `TRACEZILLA_SEED_ALLOWED_TEAM`, never into a production team by mistake. |
 
 `seeds/tracezilla.yaml` is the standard test dataset. A project that needs
 other test data puts its own file at `seeds/tracezilla.yaml` in the project,

@@ -25,7 +25,8 @@ final class SeederTest extends TestCase
         $result = $this->seeder()->run($this->definition(), execute: false);
 
         self::assertSame([], $this->gateway->writes);
-        self::assertSame([SeedResult::WOULD_CREATE => 6], $result->counts());
+        // The own company always exists; the other six records are planned.
+        self::assertSame([SeedResult::EXISTS => 1, SeedResult::WOULD_CREATE => 6], $result->counts());
         self::assertTrue($result->isSuccessful());
     }
 
@@ -41,7 +42,7 @@ final class SeederTest extends TestCase
             'sku TZ-B',
             'purchase_order TZ-STOCK-001',
         ], $this->gateway->writes);
-        self::assertSame([SeedResult::CREATED => 6], $result->counts());
+        self::assertSame([SeedResult::EXISTS => 1, SeedResult::CREATED => 6], $result->counts());
     }
 
     public function test_a_second_run_skips_everything(): void
@@ -52,7 +53,7 @@ final class SeederTest extends TestCase
         $result = $this->seeder()->run($this->definition(), execute: true);
 
         self::assertSame([], $this->gateway->writes);
-        self::assertSame([SeedResult::EXISTS => 6], $result->counts());
+        self::assertSame([SeedResult::EXISTS => 7], $result->counts());
     }
 
     public function test_it_builds_the_purchase_order_payload_from_resolved_ids(): void
@@ -61,7 +62,7 @@ final class SeederTest extends TestCase
 
         $payload = $this->gateway->purchaseOrders['TZ-STOCK-001'];
         $supplier = $this->gateway->partners['TZ-SUPPLIER'];
-        $warehouse = $this->gateway->companies['Own Company'];
+        $warehouse = $this->gateway->ownCompany;
 
         self::assertSame('2026-10-28', $payload['order_header']['delivery_date']);
         self::assertSame(
@@ -95,7 +96,7 @@ final class SeederTest extends TestCase
         self::assertContains('sku TZ-B', $this->gateway->writes);
         self::assertNotContains('purchase_order TZ-STOCK-001', $this->gateway->writes);
         self::assertFalse($result->isSuccessful());
-        self::assertSame(['sku', 'TZ-A', SeedResult::FAILED, 'HTTP 422: lot_unit is invalid'], array_values($result->items()[3]));
+        self::assertSame(['sku', 'TZ-A', SeedResult::FAILED, 'HTTP 422: lot_unit is invalid'], array_values($result->items()[4]));
     }
 
     public function test_a_failed_partner_fails_its_locations_and_orders(): void
@@ -104,9 +105,9 @@ final class SeederTest extends TestCase
 
         $result = $this->seeder()->run($this->definition(), execute: true);
 
-        self::assertSame(SeedResult::FAILED, $result->items()[1]['action']);
         self::assertSame(SeedResult::FAILED, $result->items()[2]['action']);
-        self::assertSame(SeedResult::INVALID, $result->items()[5]['action']);
+        self::assertSame(SeedResult::FAILED, $result->items()[3]['action']);
+        self::assertSame(SeedResult::INVALID, $result->items()[6]['action']);
         self::assertNotContains('purchase_order TZ-STOCK-001', $this->gateway->writes);
     }
 
@@ -117,7 +118,7 @@ final class SeederTest extends TestCase
 
         $result = $this->seeder()->run(SeedDefinition::fromArray($data), execute: false);
 
-        $order = $result->items()[5];
+        $order = $result->items()[6];
         self::assertSame(SeedResult::INVALID, $order['action']);
         self::assertStringContainsString('TZ-UNKNOWN', $order['detail']);
     }
@@ -133,17 +134,19 @@ final class SeederTest extends TestCase
         self::assertSame(99, $this->gateway->partnerPayloads['TZ-OWNED']['owned_by_id']);
     }
 
-    public function test_own_company_requires_a_configured_name(): void
+    public function test_the_own_company_is_named_in_the_result(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('TRACEZILLA_OWN_COMPANY');
+        $result = $this->seeder()->run($this->definition(), execute: false);
 
-        (new Seeder($this->gateway))->run($this->definition(), execute: false);
+        self::assertContains(
+            ['type' => 'partner', 'key' => 'own_company', 'action' => 'exists', 'detail' => 'Own Company (partner number 1)'],
+            $result->items(),
+        );
     }
 
     public function test_an_existing_own_company_location_is_reused(): void
     {
-        $this->gateway->companies['Own Company']['locations']['TZ-WAREHOUSE-MAIN'] = 'existing-warehouse';
+        $this->gateway->ownCompany['locations']['TZ-WAREHOUSE-MAIN'] = 'existing-warehouse';
 
         $this->seeder()->run($this->definition(), execute: true);
 
@@ -156,7 +159,7 @@ final class SeederTest extends TestCase
 
     private function seeder(): Seeder
     {
-        return new Seeder($this->gateway, 'Own Company', 2728, new DateTimeImmutable('2026-10-28'));
+        return new Seeder($this->gateway, 2728, new DateTimeImmutable('2026-10-28'));
     }
 
     private function definition(): SeedDefinition

@@ -39,22 +39,21 @@ final readonly class TracezillaSeedGateway implements SeedGateway
         return $partners;
     }
 
-    public function ownCompany(string $name): array
+    public function ownCompany(): array
     {
-        $matches = $this->partnersNamed($name);
-        if (count($matches) === 0) {
-            throw new RuntimeException("No tracezilla partner is named [{$name}]. Check TRACEZILLA_OWN_COMPANY.");
-        }
-        if (count($matches) > 1) {
-            throw new RuntimeException("Several tracezilla partners are named [{$name}]. Rename one of them.");
+        foreach ($this->client->getAll('/partners', ['include' => 'locations', 'perPage' => 250]) as $partner) {
+            if ($this->isPartnerNumberOne($partner)) {
+                $name = $this->trimmedText($partner, 'name');
+
+                return [
+                    'id' => (string) $partner['id'],
+                    'name' => $name,
+                    'locations' => $this->locationsByRef($partner, $name),
+                ];
+            }
         }
 
-        $partner = $matches[0];
-
-        return [
-            'id' => (string) $partner['id'],
-            'locations' => $this->locationsByRef($partner, $name),
-        ];
+        throw new RuntimeException('tracezilla has no partner number 1, which is the own company of every tracezilla company.');
     }
 
     public function skuCodes(): array
@@ -111,23 +110,14 @@ final readonly class TracezillaSeedGateway implements SeedGateway
         $this->client->put('/orders/purchase', $payload);
     }
 
-    /**
-     * The partners whose name equals $name, ignoring case and surrounding spaces.
-     *
-     * @return list<array<string, mixed>>
-     */
-    private function partnersNamed(string $name): array
+    /** @param array<string, mixed> $partner */
+    private function isPartnerNumberOne(array $partner): bool
     {
-        $candidates = $this->client->getAll('/partners', ['keyword' => ['ct' => $name], 'include' => 'locations', 'perPage' => 250]);
-
-        $matches = [];
-        foreach ($candidates as $partner) {
-            if (strcasecmp($this->trimmedText($partner, 'name'), trim($name)) === 0) {
-                $matches[] = $partner;
-            }
+        if (! isset($partner['number'])) {
+            return false;
         }
 
-        return $matches;
+        return (int) $partner['number'] === 1;
     }
 
     /**

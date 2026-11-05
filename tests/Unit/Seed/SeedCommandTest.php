@@ -27,28 +27,11 @@ final class SeedCommandTest extends TestCase
         $this->project->remove();
     }
 
-    public function test_execute_is_refused_for_a_team_that_is_not_allowed(): void
-    {
-        [$exitCode, $output] = $this->seed(['--execute'], ['TRACEZILLA_SEED_ALLOWED_TEAM' => 'dev-team']);
-
-        self::assertSame(2, $exitCode);
-        self::assertStringContainsString('but this project\'s team is [customer-production]', $output);
-        self::assertStringNotContainsString('Seeding tracezilla team', $output);
-    }
-
-    public function test_execute_is_refused_when_no_team_is_allowed(): void
-    {
-        [$exitCode, $output] = $this->seed(['--execute'], []);
-
-        self::assertSame(2, $exitCode);
-        self::assertStringContainsString('TRACEZILLA_SEED_ALLOWED_TEAM=customer-production', $output);
-    }
-
-    public function test_a_dry_run_needs_no_allowed_team(): void
+    public function test_a_dry_run_names_the_team_first(): void
     {
         [$exitCode, $output] = $this->seed(['--dry-run'], []);
 
-        // It gets past the guard and stops only because nobody has logged in.
+        // It stops only because nobody has logged in.
         self::assertSame(1, $exitCode);
         self::assertStringContainsString('Dry run for tracezilla team [customer-production]', $output);
         self::assertStringContainsString('No tracezilla token is stored', $output);

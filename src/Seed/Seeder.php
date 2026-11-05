@@ -33,7 +33,6 @@ final class Seeder
 
     public function __construct(
         private SeedGateway $gateway,
-        private ?string $ownCompanyName = null,
         private ?int $ownerId = null,
         private DateTimeImmutable $today = new DateTimeImmutable('today'),
     ) {
@@ -63,21 +62,14 @@ final class Seeder
         if (! $definition->usesOwnCompany()) {
             return;
         }
-        if (! $this->hasOwnCompanyName()) {
-            throw new RuntimeException('The seed file uses own_company. Set TRACEZILLA_OWN_COMPANY to the name of your company in tracezilla.');
-        }
 
-        $this->partners[SeedDefinition::OWN_COMPANY] = $this->gateway->ownCompany((string) $this->ownCompanyName);
+        $ownCompany = $this->gateway->ownCompany();
+        $this->result->add('partner', SeedDefinition::OWN_COMPANY, SeedResult::EXISTS, "{$ownCompany['name']} (partner number 1)");
+        $this->partners[SeedDefinition::OWN_COMPANY] = [
+            'id' => $ownCompany['id'],
+            'locations' => $ownCompany['locations'],
+        ];
         $this->seedLocations(SeedDefinition::OWN_COMPANY, $definition->ownCompanyLocations);
-    }
-
-    private function hasOwnCompanyName(): bool
-    {
-        if ($this->ownCompanyName === null) {
-            return false;
-        }
-
-        return trim($this->ownCompanyName) !== '';
     }
 
     /** @param list<array<string, mixed>> $partners */

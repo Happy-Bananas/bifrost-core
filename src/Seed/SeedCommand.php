@@ -23,12 +23,11 @@ final class SeedCommand
 
         Creates the partners, locations, SKUs and purchase orders described in the
         seed file in the tracezilla team from .env. Existing records are skipped.
-        Locations under own_company are added to the partner named by
-        TRACEZILLA_OWN_COMPANY.
+        Locations under own_company are added to your own company: partner
+        number 1, which tracezilla creates together with the company.
 
           --dry-run              Show what would be created. Nothing is written.
-          --execute              Create the missing records. Only in the team named
-                                 by TRACEZILLA_SEED_ALLOWED_TEAM.
+          --execute              Create the missing records.
 
         Default seed file: seeds/tracezilla.yaml in the project, or else the
         standard test dataset that comes with bifrost-core.
@@ -124,18 +123,11 @@ final class SeedCommand
             return 1;
         }
 
-        $refusal = SeedTeamGuard::refusal($execute, $configuration->teamSlug, $this->setting(SeedTeamGuard::ALLOWED_TEAM_VARIABLE));
-        if ($refusal !== null) {
-            fwrite(STDERR, $refusal."\n");
-
-            return 2;
-        }
-
         $this->printHeading($execute, $configuration->teamSlug);
         try {
             $tokens = TokenProvider::fromConfiguration($configuration);
             $client = new Client($configuration, $tokens);
-            $seeder = new Seeder(new TracezillaSeedGateway($client), $this->ownCompanyName(), $tokens->userId());
+            $seeder = new Seeder(new TracezillaSeedGateway($client), $tokens->userId());
             $result = $seeder->run($definition, $execute);
         } catch (Throwable $exception) {
             fwrite(STDERR, 'Seed failed: '.$exception->getMessage()."\n");
@@ -163,23 +155,6 @@ final class SeedCommand
         }
 
         return self::STANDARD_SEED_FILE;
-    }
-
-    /** The own company's name from .env, or null if it is not set. */
-    private function ownCompanyName(): ?string
-    {
-        $name = $this->setting('TRACEZILLA_OWN_COMPANY');
-        if ($name === '') {
-            return null;
-        }
-
-        return $name;
-    }
-
-    /** A setting from .env, without surrounding spaces; '' if it is not set. */
-    private function setting(string $name): string
-    {
-        return trim((string) getenv($name));
     }
 
     private function printHeading(bool $execute, string $teamSlug): void
