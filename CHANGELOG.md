@@ -2,7 +2,7 @@
 
 What changed in each release, and what an integration has to change to use it.
 
-## 0.3.0 (unreleased)
+## 0.3.0 (2026-11-05)
 
 The tracezilla client sends a request again when tracezilla cannot handle it
 for the moment, so a short outage or rate limit no longer fails a whole run.
