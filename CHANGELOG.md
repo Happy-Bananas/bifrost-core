@@ -2,6 +2,17 @@
 
 What changed in each release, and what an integration has to change to use it.
 
+## 0.6.0 (unreleased)
+
+Removes `SeedTeamGuard` and the `TRACEZILLA_SEED_ALLOWED_TEAM` setting from
+0.4.0. The extra setting made the seed harder to start with, and a production
+project is already protected: it is created with `--without-seed`, so it has
+no seed command, and every seed run should start with a dry run, which names
+the team first.
+
+What an integration changes: remove `TRACEZILLA_SEED_ALLOWED_TEAM` from
+`.env.example` and `.env`. Nothing else.
+
 ## 0.5.0 (2026-11-05)
 
 New: `Bifrost\Core\Lock\RunLock::takeOrExit($projectDirectory, $command)`.

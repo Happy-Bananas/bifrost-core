@@ -27,8 +27,7 @@ final class SeedCommand
         TRACEZILLA_OWN_COMPANY.
 
           --dry-run              Show what would be created. Nothing is written.
-          --execute              Create the missing records. Only in the team named
-                                 by TRACEZILLA_SEED_ALLOWED_TEAM.
+          --execute              Create the missing records.
 
         Default seed file: seeds/tracezilla.yaml in the project, or else the
         standard test dataset that comes with bifrost-core.
@@ -122,13 +121,6 @@ final class SeedCommand
             fwrite(STDERR, 'Seed failed: '.$exception->getMessage()."\n");
 
             return 1;
-        }
-
-        $refusal = SeedTeamGuard::refusal($execute, $configuration->teamSlug, $this->setting(SeedTeamGuard::ALLOWED_TEAM_VARIABLE));
-        if ($refusal !== null) {
-            fwrite(STDERR, $refusal."\n");
-
-            return 2;
         }
 
         $this->printHeading($execute, $configuration->teamSlug);
