@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bifrost\Core\Seed;
 
+use Bifrost\Core\Lock\RunLock;
 use Bifrost\Core\Tracezilla\Client;
 use Bifrost\Core\Tracezilla\TokenProvider;
 use Bifrost\Core\Tracezilla\TracezillaConfiguration;
@@ -66,6 +67,7 @@ final class SeedCommand
         if ($mode === null) {
             return 2;
         }
+        RunLock::takeOrExit($this->projectDirectory, 'tracezilla:seed');
 
         return $this->seed($mode->writes());
     }

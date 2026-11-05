@@ -15,7 +15,8 @@ here to see how it works; change it here, not in a project's `vendor/`.
 | Class | What it is for |
 |:--|:--|
 | `Bifrost\Core\WriteMode` | Whether a command only previews (`--dry-run`) or writes (`--execute`). There is no default. |
-| `Bifrost\Core\Lock\FileIntegrationLock` | The run lock: only one integration command runs at a time, so scheduled runs never overlap. |
+| `Bifrost\Core\Lock\RunLock` | The run lock every scheduled command takes with `RunLock::takeOrExit()`: only one runs at a time, and a command that finds it taken stops with exit code 75. |
+| `Bifrost\Core\Lock\FileIntegrationLock` | The file lock underneath `RunLock`. |
 | `Bifrost\Core\RuntimeDirectory` | Where the integration keeps files that must survive between runs: `TRACEZILLA_RUNTIME_DIR`, or `var/`. |
 | `Bifrost\Core\Tracezilla\TracezillaConfiguration` | The tracezilla settings from `.env`. |
 | `Bifrost\Core\Tracezilla\Client` | Calls the tracezilla API for one team, reads every page of a list, renews a rejected token once, and sends a request again after a temporary failure. |

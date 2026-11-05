@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Seed;
 
+use Bifrost\Core\Lock\FileIntegrationLock;
 use PHPUnit\Framework\TestCase;
 use Tests\Unit\Tracezilla\TemporaryDirectory;
 
@@ -63,6 +64,19 @@ final class SeedCommandTest extends TestCase
         // The standard dataset is valid; this one is not, so it was the one read.
         self::assertSame(1, $exitCode);
         self::assertStringContainsString('Invalid seed definition', $output);
+    }
+
+    public function test_it_is_skipped_while_another_command_holds_the_run_lock(): void
+    {
+        $other = (new FileIntegrationLock($this->project->path.'/var'))->acquire('integration', ['command' => 'scenario:run']);
+        self::assertNotNull($other);
+
+        [$exitCode, $output] = $this->seed(['--dry-run'], []);
+        $other->release();
+
+        self::assertSame(75, $exitCode);
+        self::assertStringContainsString('Command: scenario:run', $output);
+        self::assertStringNotContainsString('Dry run for tracezilla team', $output);
     }
 
     public function test_it_needs_a_mode(): void
