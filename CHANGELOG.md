@@ -2,6 +2,24 @@
 
 What changed in each release, and what an integration has to change to use it.
 
+## 0.5.0 (unreleased)
+
+New: `Bifrost\Core\Lock\RunLock::takeOrExit($projectDirectory, $command)`.
+A command calls it before it reads or writes. It takes the integration's run
+lock for the rest of the process, or, if another command holds it, explains
+that and stops with exit code 75.
+
+Before, only `bin/bifrost-connect` took the lock, so a command started
+directly (`php bin/scenario-run ...`) ran without it, and a killed
+`bin/bifrost-connect` released the lock while its command was still running.
+Now the command that does the work holds the lock.
+
+`tracezilla:seed` (`SeedCommand`) now takes the lock itself.
+
+What an integration changes: call `RunLock::takeOrExit()` in each command
+that must not overlap with another, and stop taking the lock in
+`bin/bifrost-connect`.
+
 ## 0.4.0 (2026-11-05)
 
 The tracezilla seed moves here from the integration templates: `SeedCommand`,
