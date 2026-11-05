@@ -17,6 +17,11 @@ here to see how it works; change it here, not in a project's `vendor/`.
 | `Bifrost\Core\WriteMode` | Whether a command only previews (`--dry-run`) or writes (`--execute`). There is no default. |
 | `Bifrost\Core\Lock\FileIntegrationLock` | The run lock: only one integration command runs at a time, so scheduled runs never overlap. |
 | `Bifrost\Core\RuntimeDirectory` | Where the integration keeps files that must survive between runs: `TRACEZILLA_RUNTIME_DIR`, or `var/`. |
+| `Bifrost\Core\Tracezilla\TracezillaConfiguration` | The tracezilla settings from `.env`. |
+| `Bifrost\Core\Tracezilla\Client` | Calls the tracezilla API for one team, reads every page of a list, and renews a rejected token once. |
+| `Bifrost\Core\Tracezilla\TokenProvider` | The OAuth login (`tracezilla:login`) and the automatic renewal of the access token. |
+| `Bifrost\Core\Tracezilla\TokenStore` | Keeps the tokens in a file only the owner can read, `tracezilla-token.json` in the runtime directory. |
+| `Bifrost\Core\Tracezilla\SkuCreator` | Creates a tracezilla SKU with exactly the units asked for. |
 
 More of the code that the integrations share moves here over time.
 
