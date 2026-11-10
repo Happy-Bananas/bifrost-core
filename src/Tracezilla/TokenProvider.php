@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Bifrost\Core\Tracezilla;
 
-use DateTimeImmutable;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -13,11 +12,12 @@ use RuntimeException;
 
 /**
  * Supplies a valid tracezilla access token using the OAuth Resource Owner
- * Password Credentials grant.
+ * Password Credentials grant, with the API user from .env.
  *
- * The username and password are used once, by the tracezilla:login command.
- * After that the stored refresh token renews the access token well before it
- * expires, so a regularly running integration never needs the password again.
+ * The first command logs in and stores the tokens. Later commands use the
+ * stored token and renew it well before it expires. If tracezilla refuses the
+ * renewal, or the token file is gone, the integration simply logs in again, so
+ * nobody ever has to type a username or password.
  */
 final readonly class TokenProvider
 {
@@ -30,6 +30,8 @@ final readonly class TokenProvider
         private TokenStore $store,
         private string $clientId,
         private string $clientSecret,
+        private string $username,
+        private string $password,
         ?Clock $clock = null,
     ) {
         $this->clock = $clock ?? new SystemClock();
@@ -45,31 +47,25 @@ final readonly class TokenProvider
         ]);
         $store = new TokenStore($configuration->tokenFile);
 
-        return new self($http, $store, $configuration->clientId, $configuration->clientSecret);
-    }
-
-    /** Exchange a username and password for tokens and store them. */
-    public function login(string $username, string $password): OAuthTokens
-    {
-        $tokens = $this->requestTokens([
-            'grant_type' => 'password',
-            'username' => $username,
-            'password' => $password,
-        ]);
-        $this->store->save($tokens);
-
-        return $tokens;
+        return new self(
+            $http,
+            $store,
+            $configuration->clientId,
+            $configuration->clientSecret,
+            $configuration->username,
+            $configuration->password,
+        );
     }
 
     /** An access token that is valid for at least RENEW_WITHIN_DAYS more days. */
     public function accessToken(): string
     {
-        $tokens = $this->storedTokens();
-        if ($this->isFresh($tokens)) {
+        $tokens = $this->store->load();
+        if ($tokens !== null && $this->isFresh($tokens)) {
             return $tokens->accessToken;
         }
 
-        return $this->renewUnlessAnotherRunDid();
+        return $this->freshTokenUnlessAnotherRunGotOne();
     }
 
     /**
@@ -80,12 +76,15 @@ final readonly class TokenProvider
     {
         $lock = $this->store->lock();
         try {
-            $tokens = $this->storedTokens();
+            $tokens = $this->store->load();
+            if ($tokens === null) {
+                return $this->logIn()->accessToken;
+            }
             if ($tokens->accessToken !== $rejectedAccessToken) {
                 return $tokens->accessToken;
             }
 
-            return $this->renew($tokens)->accessToken;
+            return $this->renewOrLogIn($tokens)->accessToken;
         } finally {
             $lock->release();
         }
@@ -105,29 +104,52 @@ final readonly class TokenProvider
         return (int) $claims['sub'];
     }
 
-    public function expiresAt(): DateTimeImmutable
-    {
-        return $this->storedTokens()->expiresAt;
-    }
-
     private function isFresh(OAuthTokens $tokens): bool
     {
         return ! $tokens->expiresWithin(self::RENEW_WITHIN_DAYS, $this->clock->now());
     }
 
-    private function renewUnlessAnotherRunDid(): string
+    private function freshTokenUnlessAnotherRunGotOne(): string
     {
         $lock = $this->store->lock();
         try {
-            // Another run may have renewed the token while we waited for the lock.
-            $tokens = $this->storedTokens();
-            if (! $this->isFresh($tokens)) {
-                $tokens = $this->renew($tokens);
+            // Another run may have logged in or renewed while we waited for the lock.
+            $tokens = $this->store->load();
+            if ($tokens === null) {
+                $tokens = $this->logIn();
+            } elseif (! $this->isFresh($tokens)) {
+                $tokens = $this->renewOrLogIn($tokens);
             }
 
             return $tokens->accessToken;
         } finally {
             $lock->release();
+        }
+    }
+
+    /** Log in with the API user from .env and store the tokens. */
+    private function logIn(): OAuthTokens
+    {
+        $tokens = $this->requestTokens([
+            'grant_type' => 'password',
+            'username' => $this->username,
+            'password' => $this->password,
+        ]);
+        $this->store->save($tokens);
+
+        return $tokens;
+    }
+
+    /**
+     * Renew with the refresh token. If tracezilla refuses it, for example after
+     * the token was revoked, log in again instead.
+     */
+    private function renewOrLogIn(OAuthTokens $tokens): OAuthTokens
+    {
+        try {
+            return $this->renew($tokens);
+        } catch (RuntimeException) {
+            return $this->logIn();
         }
     }
 
@@ -141,16 +163,6 @@ final readonly class TokenProvider
         $this->store->save($renewed);
 
         return $renewed;
-    }
-
-    private function storedTokens(): OAuthTokens
-    {
-        $tokens = $this->store->load();
-        if ($tokens === null) {
-            throw new RuntimeException('No tracezilla token is stored. Run bin/bifrost-connect tracezilla:login first.');
-        }
-
-        return $tokens;
     }
 
     /**
@@ -210,9 +222,9 @@ final readonly class TokenProvider
         }
 
         if ($grantType === 'refresh_token') {
-            $hint = ' The refresh token was rejected; run bin/bifrost-connect tracezilla:login again.';
+            $hint = ' The refresh token was rejected.';
         } else {
-            $hint = ' Check TRACEZILLA_CLIENT_ID, TRACEZILLA_CLIENT_SECRET, and the username and password.';
+            $hint = ' Check TRACEZILLA_CLIENT_ID, TRACEZILLA_CLIENT_SECRET, TRACEZILLA_USERNAME, and TRACEZILLA_PASSWORD in .env.';
         }
 
         return "tracezilla token request failed with HTTP {$status}: {$body}{$hint}";

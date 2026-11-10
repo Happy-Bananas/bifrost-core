@@ -29,7 +29,7 @@ final readonly class TokenStore
 
         $data = json_decode((string) file_get_contents($this->path), true);
         if (! is_array($data)) {
-            throw new RuntimeException("The tracezilla token file {$this->path} is not valid JSON. Run bin/bifrost-connect tracezilla:login.");
+            throw new RuntimeException("The tracezilla token file {$this->path} is not valid JSON. Delete it; the next command logs in again with the credentials in .env.");
         }
 
         return OAuthTokens::fromArray($data);

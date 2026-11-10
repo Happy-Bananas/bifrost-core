@@ -31,10 +31,10 @@ final class SeedCommandTest extends TestCase
     {
         [$exitCode, $output] = $this->seed(['--dry-run'], []);
 
-        // It stops only because nobody has logged in.
+        // It stops only because tracezilla.test cannot be reached for the login.
         self::assertSame(1, $exitCode);
         self::assertStringContainsString('Dry run for tracezilla team [customer-production]', $output);
-        self::assertStringContainsString('No tracezilla token is stored', $output);
+        self::assertStringContainsString('tracezilla token request failed', $output);
     }
 
     public function test_the_project_s_own_seed_file_comes_first(): void
@@ -91,6 +91,8 @@ final class SeedCommandTest extends TestCase
             'TRACEZILLA_TEAM_SLUG' => 'customer-production',
             'TRACEZILLA_CLIENT_ID' => 'client-id',
             'TRACEZILLA_CLIENT_SECRET' => 'client-secret',
+            'TRACEZILLA_USERNAME' => 'api-user@example.test',
+            'TRACEZILLA_PASSWORD' => 'api-password',
         ];
         foreach ($settings as $name => $value) {
             $environment[$name] = $value;

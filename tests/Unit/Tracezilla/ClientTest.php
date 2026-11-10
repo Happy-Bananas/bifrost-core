@@ -113,10 +113,12 @@ final class ClientTest extends TestCase
             $store,
             'client-id',
             'client-secret',
+            'api-user',
+            'api-password',
         );
 
         return new Client(
-            new TracezillaConfiguration('https://tracezilla.test', 'team', 'client-id', 'client-secret', $store->path(), 5, 5),
+            new TracezillaConfiguration('https://tracezilla.test', 'team', 'client-id', 'client-secret', 'api-user', 'api-password', $store->path(), 5, 5),
             $tokens,
             new HttpClient(['handler' => $apiStack, 'base_uri' => 'https://tracezilla.test/api/v1/team/']),
         );

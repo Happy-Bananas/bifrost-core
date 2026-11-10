@@ -65,13 +65,13 @@ final class TokenStoreTest extends TestCase
         self::assertSame('access-2', $this->store->load()?->accessToken);
     }
 
-    public function test_a_damaged_token_file_asks_for_a_new_login(): void
+    public function test_a_damaged_token_file_explains_how_to_recover(): void
     {
         mkdir(dirname($this->store->path()), 0700, true);
         file_put_contents($this->store->path(), 'not json');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('tracezilla:login');
+        $this->expectExceptionMessage('logs in again with the credentials in .env');
 
         $this->store->load();
     }

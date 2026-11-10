@@ -42,7 +42,7 @@ final readonly class OAuthTokens
         $refreshToken = self::textOrNull($data, 'refresh_token');
         $expiresAt = self::textOrNull($data, 'expires_at');
         if ($accessToken === null || $refreshToken === null || $expiresAt === null) {
-            throw new RuntimeException('The stored tracezilla token is incomplete. Run bin/bifrost-connect tracezilla:login.');
+            throw new RuntimeException('The stored tracezilla token is incomplete. Delete the token file; the next command logs in again with the credentials in .env.');
         }
 
         return new self($accessToken, $refreshToken, new DateTimeImmutable($expiresAt));
