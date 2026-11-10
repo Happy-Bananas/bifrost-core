@@ -2,7 +2,7 @@
 
 What changed in each release, and what an integration has to change to use it.
 
-## Unreleased
+## 0.7.0 (2026-11-10)
 
 The integration logs in by itself; nobody types a username or password.
 
