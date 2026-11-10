@@ -44,17 +44,18 @@ final class TokenProviderTest extends TestCase
         @rmdir($this->directory);
     }
 
-    public function test_login_exchanges_the_password_and_stores_only_tokens(): void
+    public function test_the_first_command_logs_in_with_the_api_user_and_stores_only_tokens(): void
     {
         $this->responses->append($this->tokenResponse('access-1', 'refresh-1'));
 
-        $tokens = $this->provider()->login('dev@example.test', 'secret-password');
+        self::assertSame('access-1', $this->provider()->accessToken());
 
         parse_str((string) $this->history[0]['request']->getBody(), $form);
         self::assertSame('password', $form['grant_type']);
         self::assertSame('client-id', $form['client_id']);
-        self::assertSame('2027-10-28', $tokens->expiresAt->format('Y-m-d'));
-        self::assertStringNotContainsString('secret-password', (string) file_get_contents($this->store->path()));
+        self::assertSame('api-user@example.test', $form['username']);
+        self::assertSame('refresh-1', $this->storedRefreshToken());
+        self::assertStringNotContainsString('api-password', (string) file_get_contents($this->store->path()));
         self::assertSame(0600, fileperms($this->store->path()) & 0777);
     }
 
@@ -90,21 +91,27 @@ final class TokenProviderTest extends TestCase
         self::assertCount(1, $this->history);
     }
 
-    public function test_a_rejected_refresh_token_asks_for_a_new_login(): void
+    public function test_a_rejected_refresh_token_leads_to_a_new_login(): void
     {
         $this->store->save(new OAuthTokens('access-1', 'refresh-1', $this->now->modify('+1 day')));
-        $this->responses->append(new Response(401, [], '{"error":"invalid_grant"}'));
+        $this->responses->append(
+            new Response(401, [], '{"error":"invalid_grant"}'),
+            $this->tokenResponse('access-2', 'refresh-2'),
+        );
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('run bin/bifrost-connect tracezilla:login again');
+        self::assertSame('access-2', $this->provider()->accessToken());
 
-        $this->provider()->accessToken();
+        parse_str((string) $this->history[1]['request']->getBody(), $form);
+        self::assertSame('password', $form['grant_type']);
+        self::assertSame('refresh-2', $this->storedRefreshToken());
     }
 
-    public function test_it_asks_for_a_login_when_no_token_is_stored(): void
+    public function test_a_refused_login_names_the_settings_to_check(): void
     {
+        $this->responses->append(new Response(400, [], '{"error":"invalid_grant"}'));
+
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Run bin/bifrost-connect tracezilla:login first');
+        $this->expectExceptionMessage('TRACEZILLA_USERNAME, and TRACEZILLA_PASSWORD in .env');
 
         $this->provider()->accessToken();
     }
@@ -119,6 +126,8 @@ final class TokenProviderTest extends TestCase
             $this->store,
             'client-id',
             'client-secret',
+            'api-user@example.test',
+            'api-password',
             new FixedClock($this->now),
         );
     }

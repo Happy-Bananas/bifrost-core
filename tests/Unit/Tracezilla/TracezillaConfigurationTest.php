@@ -15,6 +15,8 @@ final class TracezillaConfigurationTest extends TestCase
         'TRACEZILLA_TEAM_SLUG',
         'TRACEZILLA_CLIENT_ID',
         'TRACEZILLA_CLIENT_SECRET',
+        'TRACEZILLA_USERNAME',
+        'TRACEZILLA_PASSWORD',
         'TRACEZILLA_TOKEN_FILE',
         'TRACEZILLA_RUNTIME_DIR',
         'HTTP_TIMEOUT',
@@ -27,6 +29,8 @@ final class TracezillaConfigurationTest extends TestCase
         putenv('TRACEZILLA_TEAM_SLUG=dev-team');
         putenv('TRACEZILLA_CLIENT_ID=client-id');
         putenv('TRACEZILLA_CLIENT_SECRET=client-secret');
+        putenv('TRACEZILLA_USERNAME=api-user@example.test');
+        putenv('TRACEZILLA_PASSWORD=api-password');
     }
 
     protected function tearDown(): void
@@ -43,6 +47,8 @@ final class TracezillaConfigurationTest extends TestCase
         self::assertSame('https://app.tracezilla.test', $configuration->baseUrl);
         self::assertSame('dev-team', $configuration->teamSlug);
         self::assertSame('client-id', $configuration->clientId);
+        self::assertSame('api-user@example.test', $configuration->username);
+        self::assertSame('api-password', $configuration->password);
         self::assertSame('client-secret', $configuration->clientSecret);
         self::assertSame(30.0, $configuration->timeout);
         self::assertSame(10.0, $configuration->connectTimeout);

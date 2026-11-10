@@ -2,6 +2,22 @@
 
 What changed in each release, and what an integration has to change to use it.
 
+## Unreleased
+
+The integration logs in by itself; nobody types a username or password.
+
+- `TracezillaConfiguration` reads `TRACEZILLA_USERNAME` and
+  `TRACEZILLA_PASSWORD`: the API user (`…@tracezilla.api`) that tracezilla
+  creates with the Resource Owner Password Credentials. Both are required.
+- `TokenProvider` logs in with them when no token is stored, and again when
+  tracezilla refuses the refresh token. `login()`, `storedTokens()` and
+  `expiresAt()` are removed.
+
+What an integration changes: add `TRACEZILLA_USERNAME` and
+`TRACEZILLA_PASSWORD` to `.env.example` and `.env`, delete its
+`tracezilla:login` command, and pass the two values when it constructs a
+`TokenProvider` itself (tests usually do).
+
 ## 0.6.0 (2026-11-05)
 
 The seed needs no settings of its own any more.

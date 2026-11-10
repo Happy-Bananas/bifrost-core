@@ -20,7 +20,7 @@ here to see how it works; change it here, not in a project's `vendor/`.
 | `Bifrost\Core\RuntimeDirectory` | Where the integration keeps files that must survive between runs: `TRACEZILLA_RUNTIME_DIR`, or `var/`. |
 | `Bifrost\Core\Tracezilla\TracezillaConfiguration` | The tracezilla settings from `.env`. |
 | `Bifrost\Core\Tracezilla\Client` | Calls the tracezilla API for one team, reads every page of a list, renews a rejected token once, and sends a request again after a temporary failure. |
-| `Bifrost\Core\Tracezilla\TokenProvider` | The OAuth login (`tracezilla:login`) and the automatic renewal of the access token. |
+| `Bifrost\Core\Tracezilla\TokenProvider` | The automatic OAuth login with the API user from `.env`, and the renewal of the access token. |
 | `Bifrost\Core\Tracezilla\TokenStore` | Keeps the tokens in a file only the owner can read, `tracezilla-token.json` in the runtime directory. |
 | `Bifrost\Core\Tracezilla\SkuCreator` | Creates a tracezilla SKU with exactly the units asked for. |
 | `Bifrost\Core\Seed\SeedCommand` | The `tracezilla:seed` command: fills a development company with the test dataset in `seeds/tracezilla.yaml`. |

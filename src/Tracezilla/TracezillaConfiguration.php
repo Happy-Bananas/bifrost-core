@@ -8,7 +8,9 @@ use Bifrost\Core\RuntimeDirectory;
 use RuntimeException;
 
 /**
- * The tracezilla settings from .env.
+ * The tracezilla settings from .env. The client ID, client secret, username,
+ * and password are the "Resource Owner Password Credentials" that tracezilla
+ * creates together with a dedicated API user; they are not a person's login.
  */
 final readonly class TracezillaConfiguration
 {
@@ -17,6 +19,8 @@ final readonly class TracezillaConfiguration
         public string $teamSlug,
         public string $clientId,
         public string $clientSecret,
+        public string $username,
+        public string $password,
         public string $tokenFile,
         public float $timeout,
         public float $connectTimeout,
@@ -30,6 +34,8 @@ final readonly class TracezillaConfiguration
             self::required('TRACEZILLA_TEAM_SLUG'),
             self::required('TRACEZILLA_CLIENT_ID'),
             self::required('TRACEZILLA_CLIENT_SECRET'),
+            self::required('TRACEZILLA_USERNAME'),
+            self::required('TRACEZILLA_PASSWORD'),
             self::tokenFile($projectDirectory),
             (float) self::optional('HTTP_TIMEOUT', '30'),
             (float) self::optional('HTTP_CONNECT_TIMEOUT', '10'),

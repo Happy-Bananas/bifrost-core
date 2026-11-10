@@ -162,8 +162,8 @@ final class ClientRetryTest extends TestCase
         $stack->push(Middleware::history($this->history));
 
         return new Client(
-            new TracezillaConfiguration('https://tracezilla.test', 'team', 'id', 'secret', $store->path(), 5, 5),
-            new TokenProvider(new HttpClient(['handler' => HandlerStack::create(new MockHandler())]), $store, 'id', 'secret'),
+            new TracezillaConfiguration('https://tracezilla.test', 'team', 'id', 'secret', 'api-user', 'api-password', $store->path(), 5, 5),
+            new TokenProvider(new HttpClient(['handler' => HandlerStack::create(new MockHandler())]), $store, 'id', 'secret', 'api-user', 'api-password'),
             new HttpClient(['handler' => $stack, 'base_uri' => 'https://tracezilla.test/api/v1/team/']),
             $this->pause,
         );
